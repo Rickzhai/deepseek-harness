@@ -22,12 +22,20 @@ browser ──► gateway (login page + /auth/* + reverse proxy)
 
 ## CLI
 
-The package ships a `dsh-web-gateway` bin, plus a one-shot launcher script
+The package ships a `dsh-web-gateway` bin, plus a one-shot lifecycle launcher
 for a local checkout:
 
 ```sh
-# Start the gateway on 127.0.0.1:3088 (defaults: GATEWAY_PORT / GATEWAY_DATA_ROOT / GATEWAY_HOST).
+# Start the gateway as a background service on 127.0.0.1:3088
+# (defaults: GATEWAY_PORT / GATEWAY_DATA_ROOT / GATEWAY_HOST).
 ./docker/web-gateway/start-gateway.sh
+
+# Lifecycle verbs:
+./docker/web-gateway/start-gateway.sh foreground           # run in the foreground
+./docker/web-gateway/start-gateway.sh status               # show running state + users
+./docker/web-gateway/start-gateway.sh logs                 # follow the gateway log
+./docker/web-gateway/start-gateway.sh stop                 # stop the gateway
+./docker/web-gateway/start-gateway.sh restart              # stop then start
 
 # Create and manage users against the same data root.
 ./docker/web-gateway/start-gateway.sh user add alice --admin --password 'pw'
