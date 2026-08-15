@@ -4929,6 +4929,25 @@ importers:
         specifier: workspace:^
         version: link:../../typert/protocol
 
+  packages/host/web-gateway:
+    dependencies:
+      commander:
+        specifier: ^15.0.0
+        version: 15.0.0
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-home-paths':
+        specifier: workspace:^
+        version: link:../../util/home-paths
+      '@deepseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+      ws:
+        specifier: ^8.21.0
+        version: 8.21.0
+
   packages/host/webserver:
     dependencies:
       '@deepseek-ai/schemastery':

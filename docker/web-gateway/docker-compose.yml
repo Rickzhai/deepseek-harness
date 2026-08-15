@@ -1,0 +1,38 @@
+# Multi-user DeepSeek Harness gateway: one container, many isolated users.
+#
+# The gateway serves a login page and proxies each authenticated user to their
+# own `dsh web` instance (own $DSH_HOME, sessions, credentials, workspace).
+#
+# Before first start, create your first user (it becomes admin):
+#   docker compose run --rm gateway user add alice --admin
+#   # (enter a password at the prompt)
+#
+# Then start the service:
+#   docker compose up -d
+#
+# To add OIDC SSO, set the OIDC_* environment variables and restart.
+
+services:
+  gateway:
+    build:
+      context: ../..
+      dockerfile: docker/web-gateway/Dockerfile
+    ports:
+      - "3080:3080"
+    volumes:
+      - gateway-data:/data
+    restart: unless-stopped
+    environment:
+      # Stable server secret (cookie signing + OIDC state). Override with a
+      # long random value in production; leave unset to auto-generate once.
+      GATEWAY_SECRET: "${GATEWAY_SECRET:-}"
+      # --- OIDC (optional; uncomment and fill to enable SSO login) ---
+      # OIDC_ISSUER: "https://accounts.google.com"
+      # OIDC_CLIENT_ID: "your-client-id"
+      # OIDC_CLIENT_SECRET: "your-client-secret"
+      # OIDC_REDIRECT_URI: "https://your-host/auth/oidc/callback"
+      # OIDC_EXTRA_SCOPES: ""
+      # OIDC_AUTO_PROVISION: "true"
+
+volumes:
+  gateway-data:

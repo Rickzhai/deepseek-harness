@@ -92,6 +92,16 @@
         "tests/**/*.ts"
       ]
     },
+    "packages/host/web-gateway": {
+      "entry": [
+        "src/bin.ts",
+        "tests/**/*.spec.ts"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ]
+    },
     "packages/host/directory-picker-auto": {
       "ignoreDependencies": [
         "@deepseek-ai/dsh-client-ui-directory-picker-browse",

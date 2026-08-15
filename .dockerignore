@@ -1,0 +1,47 @@
+# Docker build context exclusions: keep the context to source, drop every
+# host-local artifact and dependency store so the Linux image builds clean.
+
+# Dependency stores and lock caches.
+node_modules/
+.pnpm-store/
+.cache/
+
+# Host build artifacts (rebuilt inside the image).
+**/lib/
+**/dist/
+**/*.tsbuildinfo
+dist-exe/
+.artifacts/
+
+# Host-local state and tooling.
+.git/
+.claude/
+.agents/worktrees/
+worktrees/
+.worktrees/
+.vscode/
+.idea/
+.DS_Store
+tmp/
+coverage/
+.humanize/
+.oxlint-contract-*/
+oxlint-contract-*.ts
+.oxlintrc.contract-*.json
+.typert-*/
+.doc-typecheck-*/
+.node-next-types-*/
+
+# Harness-local session/workspace state.
+.sessions/
+.storages/
+examples/*/.sessions/
+
+# Secrets and local env.
+.env
+CLAUDE.local.md
+
+# Python SDK runtime artifacts.
+python/sdk-runtime/src/deepseek_harness_runtime/runtime/node/
+python/**/__pycache__/
+python/**/.pytest_cache/
