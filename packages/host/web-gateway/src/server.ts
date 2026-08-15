@@ -117,7 +117,7 @@ class LoginThrottle {
 export function createGatewayServer(config: GatewayServerConfig): GatewayServer {
   const resolved = {
     host: config.host ?? '127.0.0.1',
-    port: config.port ?? 3080,
+    port: config.port ?? 3088,
     secureCookies: config.secureCookies ?? false,
     sessionTtlMs: config.sessionTtlMs ?? DEFAULT_SESSION_TTL_MS,
     dshBin: config.dshBin ?? 'dsh',

@@ -44,7 +44,7 @@ RUN ln -s /srv/apps/cli/lib/bin.js /usr/local/bin/dsh
 # Gateway state (users, sessions, per-user DSH homes, workspaces) lives here.
 VOLUME ["/data"]
 
-EXPOSE 3080
+EXPOSE 3088
 
 ENTRYPOINT ["node", "/srv/packages/host/web-gateway/lib/bin.js"]
-CMD ["serve", "--host", "0.0.0.0", "--port", "3080", "--data-root", "/data"]
+CMD ["serve", "--host", "0.0.0.0", "--port", "3088", "--data-root", "/data"]

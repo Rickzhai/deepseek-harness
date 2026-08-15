@@ -1,16 +1,16 @@
 # `@deepseek-ai/dsh-host-web-gateway`
 
-English | [中文](README.zh.md)
+[English](README.md) | 中文
 
 DeepSeek Harness Web GUI 的多用户网关：一套服务、多个相互隔离的用户。网关是一个独立的边缘进程（纯 `node:http`——无 cordis 树、无 Loader），负责提供登录页、完成用户认证，并把每个已认证请求反向代理到该用户专属的私有 `dsh web` 实例。每个实例以网关数据根下的独立 `$DSH_HOME` 运行，因此会话、凭据、设置与默认工作区天然按用户隔离。
 
 ## 工作原理
 
 ```
-浏览器 ──► 网关（登录页 + /auth/* + 反向代理）
-                 │  会话 cookie
+browser ──► gateway (login page + /auth/* + reverse proxy)
+                 │  cookie session
                  ▼
-        每用户 `dsh web`，监听 127.0.0.1:<port>
+        per-user `dsh web` on 127.0.0.1:<port>
         DSH_HOME=<data-root>/users/<id>
 ```
 
@@ -22,13 +22,24 @@ DeepSeek Harness Web GUI 的多用户网关：一套服务、多个相互隔离�
 
 ## CLI
 
-本包提供 `dsh-web-gateway` 命令：
+本包提供 `dsh-web-gateway` 命令，另附一个本地一键启动脚本：
 
 ```sh
-# 启动网关（登录页 + 代理）。通过 `user add` 创建的第一个用户自动成为 admin。
+# Start the gateway on 127.0.0.1:3088 (defaults: GATEWAY_PORT / GATEWAY_DATA_ROOT / GATEWAY_HOST).
+./docker/web-gateway/start-gateway.sh
+
+# Create and manage users against the same data root.
+./docker/web-gateway/start-gateway.sh user add alice --admin --password 'pw'
+./docker/web-gateway/start-gateway.sh user list
+```
+
+原生 `dsh-web-gateway` 命令（不经过包装脚本）用法相同：
+
+```sh
+# Serve the gateway (login page + proxy). First user created via `user add` becomes admin.
 dsh-web-gateway serve --host 0.0.0.0 --port 8080 --data-root /srv/gateway --dsh-bin dsh
 
-# 用户管理（针对同一数据根执行）。
+# Manage users (runs against the same data root).
 dsh-web-gateway user add alice --admin
 dsh-web-gateway user passwd alice
 dsh-web-gateway user rm alice

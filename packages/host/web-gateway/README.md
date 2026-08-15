@@ -22,7 +22,19 @@ browser ──► gateway (login page + /auth/* + reverse proxy)
 
 ## CLI
 
-The package ships a `dsh-web-gateway` bin:
+The package ships a `dsh-web-gateway` bin, plus a one-shot launcher script
+for a local checkout:
+
+```sh
+# Start the gateway on 127.0.0.1:3088 (defaults: GATEWAY_PORT / GATEWAY_DATA_ROOT / GATEWAY_HOST).
+./docker/web-gateway/start-gateway.sh
+
+# Create and manage users against the same data root.
+./docker/web-gateway/start-gateway.sh user add alice --admin --password 'pw'
+./docker/web-gateway/start-gateway.sh user list
+```
+
+The raw `dsh-web-gateway` bin (no wrapper) works identically:
 
 ```sh
 # Serve the gateway (login page + proxy). First user created via `user add` becomes admin.
