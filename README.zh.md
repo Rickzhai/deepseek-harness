@@ -6,6 +6,23 @@ DeepSeek Harness（`dsh`）是由 [DeepSeek AI](https://deepseek.com) 开发的�
 
 它采用**一切皆插件**的架构，并由 [Cordis](https://github.com/cordiverse/cordis) 驱动，其设计参见论文 [_A Programming Paradigm for Spatiotemporal Composability_](https://github.com/cordiverse/paper)。
 
+## 本 Fork：多用户网关
+
+本 fork 完整保留上游 DeepSeek Harness，并新增一个可选、自包含的能力：**多用户网关**，让多人安全地共用一套 Web 服务。
+
+- **每用户账号与登录** — 本地账号（scrypt 密码哈希、登录限速）与 OIDC 单点登录（授权码 + PKCE），并签发 HttpOnly 会话 cookie。
+- **天然隔离** — 每个已认证用户获得独立的 `dsh web` 实例与私有 `$DSH_HOME`（会话、凭据、设置及默认工作区），由网关拉起并经 HTTP + WebSocket 反向代理访问。
+- **用户管理 CLI** — `dsh-web-gateway user add/passwd/rm/list` 以及工作区授权（`grant`/`revoke`），且无需重启网关即可生效。
+- **Docker 部署** — 现成的 `Dockerfile` 与 `docker-compose.yml`，位于 [`docker/web-gateway/`](docker/web-gateway/)。
+
+网关代码位于 [`packages/host/web-gateway`](packages/host/web-gateway/README.md)；用法见其 README。
+
+### 上游兼容性
+
+未修改任何上游核心包——网关全部为新增文件，外加四处仅用于注册的一行改动（`tsconfig.host.json`、`knip.json`、`scripts/verify-package-readme-model-experience.ts`、`pnpm-lock.yaml`）。原始 `dsh` CLI、Web UI 及全部上游行为原样保留，且网关为可选：不使用它时，本 checkout 与上游行为完全一致。
+
+上游版本通过将 `multi-user-web-gateway` 分支 rebase 到 `upstream/master` 即可干净合并。完整流程（含每次升级后需要复验的内容）见 [`docker/web-gateway/UPGRADING.md`](docker/web-gateway/UPGRADING.md)。
+
 ## 开发者预览
 
 DeepSeek Harness 目前处于 _开发者预览_ 阶段，正在快速迭代。**未来将出现破坏兼容性的变更。**
