@@ -119,11 +119,29 @@ export function proxyUpgrade(
       }
       // Replay the child's real 101 (its Sec-WebSocket-Accept is computed
       // from the client key, so the browser verifies it), then bridge.
+      // A WebSocket 101 MUST carry both `Connection: Upgrade` and
+      // `Upgrade: websocket`, and undici (and the WebSocket spec) match
+      // `Sec-WebSocket-Accept` case-sensitively — but node:http lowercases
+      // header names on `upstreamRes.headers`. Normalize the three handshake
+      // headers back to their canonical casing on the wire; the generic
+      // hop-by-hop strip must also keep `Connection` here.
       const lines = [`HTTP/1.1 101 ${upstreamRes.statusMessage ?? 'Switching Protocols'}`]
+      let wroteConnection = false
+      let wroteUpgrade = false
       for (const [name, value] of Object.entries(upstreamRes.headers)) {
-        if (value === undefined || STRIP_RESPONSE_HEADERS.has(name.toLowerCase())) continue
-        for (const v of Array.isArray(value) ? value : [value]) lines.push(`${name}: ${v}`)
+        if (value === undefined) continue
+        const lower = name.toLowerCase()
+        if (STRIP_RESPONSE_HEADERS.has(lower) && lower !== 'connection') continue
+        const canonical = lower === 'connection' ? 'Connection'
+          : lower === 'upgrade' ? 'Upgrade'
+            : lower === 'sec-websocket-accept' ? 'Sec-WebSocket-Accept'
+              : name
+        wroteConnection = wroteConnection || lower === 'connection'
+        wroteUpgrade = wroteUpgrade || lower === 'upgrade'
+        for (const v of Array.isArray(value) ? value : [value]) lines.push(`${canonical}: ${v}`)
       }
+      if (!wroteConnection) lines.push('Connection: Upgrade')
+      if (!wroteUpgrade) lines.push('Upgrade: websocket')
       clientSocket.write(`${lines.join('\r\n')}\r\n\r\n`)
       bridgeSockets(clientSocket, upstreamSocket, head)
       resolve()

@@ -7,8 +7,9 @@
  */
 
 import { spawn, type ChildProcess } from 'node:child_process'
-import { createServer, type Server } from 'node:net'
+import { connect, createServer, type Server, type Socket } from 'node:net'
 import { once } from 'node:events'
+import { randomBytes } from 'node:crypto'
 import { ensureUserDirs, userHomeDir, userWorkspaceDir } from './users.ts'
 
 /** One managed per-user instance. */
@@ -200,7 +201,7 @@ export class InstanceManager {
       }
       try {
         const response = await fetch(`http://127.0.0.1:${port}/`, { signal: AbortSignal.timeout(this.config.probeIntervalMs) })
-        if (response.ok) {
+        if (response.ok && await probeWebSocketReady(port)) {
           instance.ready = true
           this.log(`instance for ${userId} ready on 127.0.0.1:${port}`)
           return
@@ -230,4 +231,48 @@ export class InstanceManager {
 /** Resolve after `ms` milliseconds. */
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * Probe whether the child's WebSocket downlink route (`/api/events.mux`) is
+ * mounted yet, by sending a raw WebSocket handshake and checking for a 101.
+ * The HTTP `/` probe returns 200 before the client-connection plugin has
+ * registered its upgrade routes; a browser handshake racing that window gets
+ * ECONNRESET and backs off, which surfaced as a ~30s login/refresh stall.
+ * Requiring a real 101 here closes that race before the instance is marked
+ * ready.
+ * @param port - the child's loopback port.
+ * @returns whether the child answered a WebSocket 101.
+ */
+function probeWebSocketReady(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = (ok: boolean): void => {
+      if (settled) return
+      settled = true
+      client.destroy()
+      resolve(ok)
+    }
+    const client: Socket = connect(port, '127.0.0.1')
+    const key = randomBytes(16).toString('base64')
+    const request = [
+      'GET /api/events.mux HTTP/1.1',
+      `Host: 127.0.0.1:${String(port)}`,
+      'Upgrade: websocket',
+      'Connection: Upgrade',
+      `Sec-WebSocket-Key: ${key}`,
+      'Sec-WebSocket-Version: 13',
+      '',
+      '',
+    ].join('\r\n')
+    let buf = ''
+    client.on('connect', () => { client.write(request) })
+    client.on('data', (chunk: Buffer) => {
+      buf += chunk.toString('latin1')
+      if (buf.includes('\r\n\r\n')) finish(buf.startsWith('HTTP/1.1 101'))
+    })
+    client.on('error', () => { finish(false) })
+    client.on('close', () => { finish(false) })
+    setTimeout(() => { finish(false) }, 1000)
+  })
 }
