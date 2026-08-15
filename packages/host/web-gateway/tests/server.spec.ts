@@ -61,7 +61,7 @@ async function login(gateway: GatewayServer, username: string, password: string)
     body: JSON.stringify({ username, password }),
   })
   const cookie = response.headers.get('set-cookie')?.split(';')[0]
-  return { status: response.status, cookie }
+  return { status: response.status, ...(cookie !== undefined ? { cookie } : {}) }
 }
 
 describe('gateway login flow', () => {

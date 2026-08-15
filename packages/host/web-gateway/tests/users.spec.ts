@@ -53,7 +53,7 @@ describe('UserStore', () => {
     const alice = reloaded.byUsername('alice')
     expect(alice).toBeDefined()
     expect(alice?.passwordHash).not.toBe('pw')
-    expect(alice?.passwordHash === null || verifyPassword(alice.passwordHash, 'pw')).toBe(true)
+    expect(alice !== undefined && (alice.passwordHash === null || verifyPassword(alice.passwordHash, 'pw'))).toBe(true)
   })
 
   it('rejects duplicate usernames', async () => {

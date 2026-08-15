@@ -10,7 +10,7 @@ import { proxyHttp } from '../src/proxy.ts'
 
 let upstream: Server | undefined
 let upstreamPort = 0
-let lastSeen: { headers: Record<string, string | string[] | undefined>; url?: string; body?: string } | undefined
+let lastSeen: { headers: import('node:http').IncomingHttpHeaders; url?: string; body?: string } | undefined
 
 beforeAll(async () => {
   upstream = createServer((req: IncomingMessage, res: ServerResponse) => {
@@ -19,7 +19,7 @@ beforeAll(async () => {
     req.on('end', () => {
       lastSeen = {
         headers: req.headers,
-        url: req.url,
+        ...(req.url !== undefined ? { url: req.url } : {}),
         body: Buffer.concat(chunks).toString('utf8'),
       }
       res.writeHead(200, { 'content-type': 'application/json', 'x-upstream': 'yes' })
@@ -67,8 +67,8 @@ function fetchThrough(
 ): Promise<Response> {
   return fetch(`http://127.0.0.1:${String(port)}${path}`, {
     method: init?.method ?? 'GET',
-    headers: init?.headers,
-    body: init?.body,
+    ...(init?.headers !== undefined ? { headers: init.headers } : {}),
+    ...(init?.body !== undefined ? { body: init.body } : {}),
   })
 }
 
