@@ -29,7 +29,7 @@ interface SessionStoreFile {
 export const SESSION_COOKIE = 'dsh_gw_session'
 
 const TOKEN_BYTES = 32
-const COOKIE_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7 // 7 days
+const COOKIE_MAX_AGE_MS = 1000 * 60 * 60 // 1 hour (sliding)
 
 /**
  * The gateway session store. Tokens are random 256-bit values; only their
@@ -105,7 +105,7 @@ export class SessionStore {
   /**
    * Issue a new session for a user.
    * @param userId - the authenticated user.
-   * @param ttlMs - session lifetime; defaults to 7 days.
+   * @param ttlMs - session lifetime; defaults to 1 hour (sliding).
    * @returns the raw cookie value (token.signature) to set on the client.
    */
   issue(userId: string, ttlMs = COOKIE_MAX_AGE_MS): string {

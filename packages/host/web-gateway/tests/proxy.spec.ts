@@ -155,4 +155,33 @@ describe('proxyHttp', () => {
       })
     }
   })
+
+  it('injects the user menu into an HTML response', async () => {
+    // A fake HTML upstream + a gateway-side proxy; the proxied body must gain
+    // the user-menu marker before </head>, while non-HTML responses are
+    // streamed unchanged.
+    const htmlUpstream = createServer((_req: IncomingMessage, res: ServerResponse) => {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
+      res.end('<!doctype html><html><head><title>x</title></head><body></body></html>')
+    })
+    await new Promise<void>((resolve) => { htmlUpstream.listen(0, '127.0.0.1', () => { resolve() }) })
+    const htmlPort = (htmlUpstream.address() as AddressInfo).port
+    const proxy = createServer((req: IncomingMessage, res: ServerResponse) => {
+      void proxyHttp(req, res, { host: '127.0.0.1', port: htmlPort })
+    })
+    await new Promise<void>((resolve) => { proxy.listen(0, '127.0.0.1', () => { resolve() }) })
+    const proxyPort = (proxy.address() as AddressInfo).port
+    try {
+      const response = await fetch(`http://127.0.0.1:${String(proxyPort)}/`)
+      const body = await response.text()
+      expect(response.status).toBe(200)
+      expect(body).toContain('data-dsh-gateway-user')
+      expect(body).toContain('/auth/logout')
+      // The marker must land inside <head>, before the SPA boots.
+      expect(body.indexOf('data-dsh-gateway-user')).toBeLessThan(body.indexOf('</head>'))
+    } finally {
+      await new Promise<void>((resolve) => { proxy.close(() => { resolve() }) })
+      await new Promise<void>((resolve) => { htmlUpstream.close(() => { resolve() }) })
+    }
+  })
 })

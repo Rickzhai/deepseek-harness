@@ -18,6 +18,7 @@
 #   GATEWAY_PORT      listen port (default 3088)
 #   GATEWAY_DATA_ROOT gateway data root (default ~/.dsh/gateway)
 #   GATEWAY_HOST      listen host (default 127.0.0.1)
+#   GATEWAY_SESSION_TTL_MS  session lifetime in ms (default 3600000 = 1 hour, sliding)
 #   DSH_BIN           dsh executable for per-user instances
 set -euo pipefail
 
@@ -28,6 +29,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 GATEWAY_HOST="${GATEWAY_HOST:-127.0.0.1}"
 GATEWAY_PORT="${GATEWAY_PORT:-3088}"
 GATEWAY_DATA_ROOT="${GATEWAY_DATA_ROOT:-$HOME/.dsh/gateway}"
+GATEWAY_SESSION_TTL_MS="${GATEWAY_SESSION_TTL_MS:-3600000}"
 
 PID_FILE="${GATEWAY_DATA_ROOT}/gateway.pid"
 LOG_FILE="${GATEWAY_DATA_ROOT}/gateway.log"
@@ -66,7 +68,8 @@ ensure_data_root() {
 gateway_proc_args() {
   pnpm --dir "${REPO_ROOT}" exec tsx "${BIN_ENTRY}" serve \
     --host "${GATEWAY_HOST}" --port "${GATEWAY_PORT}" \
-    --data-root "${GATEWAY_DATA_ROOT}" --dsh-bin "${DSH_BIN}"
+    --data-root "${GATEWAY_DATA_ROOT}" --dsh-bin "${DSH_BIN}" \
+    --session-ttl-ms "${GATEWAY_SESSION_TTL_MS}"
 }
 
 # Match pattern for the REAL node process that owns the port. `pnpm exec` forks

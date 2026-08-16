@@ -27,7 +27,7 @@ export interface GatewayServerConfig {
   port?: number
   /** Whether cookies carry the `Secure` attribute (serve behind TLS). */
   secureCookies?: boolean
-  /** Session TTL (ms). Defaults to 7 days. */
+  /** Session TTL (ms). Defaults to 1 hour (sliding). */
   sessionTtlMs?: number
   /** The `dsh` executable for per-user instances. Defaults to `dsh` on PATH. */
   dshBin?: string
@@ -47,7 +47,7 @@ export interface GatewayServerConfig {
   loginWindowMs?: number
 }
 
-const DEFAULT_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7
+const DEFAULT_SESSION_TTL_MS = 1000 * 60 * 60 // 1 hour (sliding)
 const DEFAULT_IDLE_TIMEOUT_MS = 1000 * 60 * 30
 const DEFAULT_START_TIMEOUT_MS = 60_000
 const DEFAULT_LOGIN_MAX_FAILURES = 5
@@ -269,7 +269,12 @@ export function createGatewayServer(config: GatewayServerConfig): GatewayServer 
   }
 
   function handleLogout(req: IncomingMessage, res: ServerResponse): void {
-    sessions.revoke(readCookie(req, SESSION_COOKIE))
+    const cookie = readCookie(req, SESSION_COOKIE)
+    const userId = sessions.validate(cookie, resolved.sessionTtlMs)
+    sessions.revoke(cookie)
+    // Logging out also tears down the user's dsh instance immediately, so a
+    // shared host does not hold an idle per-user process after sign-out.
+    if (userId !== undefined) instances.stop(userId)
     res.writeHead(200, {
       'content-type': 'application/json',
       'set-cookie': `${SESSION_COOKIE}=; Path=/; HttpOnly; Max-Age=0`,

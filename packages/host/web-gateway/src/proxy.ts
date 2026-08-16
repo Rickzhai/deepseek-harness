@@ -7,6 +7,7 @@
 
 import { request as httpRequest, type ClientRequest, type IncomingMessage, type ServerResponse } from 'node:http'
 import { type Duplex } from 'node:stream'
+import { injectUserMenu } from './user-menu-inject.ts'
 
 /** Headers the gateway must not forward to the child instance. */
 const STRIP_REQUEST_HEADERS = new Set([
@@ -61,6 +62,24 @@ export function proxyHttp(
       for (const [name, value] of Object.entries(upstreamRes.headers)) {
         if (value === undefined || STRIP_RESPONSE_HEADERS.has(name.toLowerCase())) continue
         responseHeaders[name] = value
+      }
+      // Inject the user menu into the SPA's index.html. Buffering the whole
+      // body is bounded by the request body cap on the API side; the SPA shell
+      // is small. Drop content-length so the altered body streams as chunked.
+      const contentType = upstreamRes.headers['content-type'] ?? ''
+      const isHtml = contentType.includes('text/html')
+      if (isHtml) {
+        const chunks: Buffer[] = []
+        upstreamRes.on('data', (chunk: Buffer) => { chunks.push(chunk) })
+        upstreamRes.on('end', () => {
+          const body = injectUserMenu(Buffer.concat(chunks).toString('utf8'))
+          delete responseHeaders['content-length']
+          res.writeHead(upstreamRes.statusCode ?? 502, upstreamRes.statusMessage, responseHeaders)
+          res.end(body)
+          resolve()
+        })
+        upstreamRes.on('error', reject)
+        return
       }
       res.writeHead(upstreamRes.statusCode ?? 502, upstreamRes.statusMessage, responseHeaders)
       upstreamRes.pipe(res)

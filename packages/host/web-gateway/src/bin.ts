@@ -17,7 +17,7 @@ import { defaultGatewaySecret } from './sessions.ts'
 import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 
 const DEFAULT_DATA_ROOT = join(resolveDshHome(), 'gateway')
-const DEFAULT_SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7
+const DEFAULT_SESSION_TTL_MS = 1000 * 60 * 60 // 1 hour (sliding)
 const DEFAULT_IDLE_TIMEOUT_MS = 1000 * 60 * 30
 const DEFAULT_START_TIMEOUT_MS = 60_000
 const DEFAULT_LOGIN_MAX_FAILURES = 5
@@ -143,7 +143,7 @@ program.command('serve')
   .option('--port <port>', 'listen port', value => Number(value), 3088)
   .option('--data-root <dir>', 'gateway data root', DEFAULT_DATA_ROOT)
   .option('--secure-cookies', 'set the Secure attribute on session cookies (behind TLS)')
-  .option('--session-ttl-ms <ms>', 'session lifetime in ms', value => Number(value), DEFAULT_SESSION_TTL_MS)
+  .option('--session-ttl-ms <ms>', 'session lifetime in ms (default 1 hour, sliding)', value => Number(value), DEFAULT_SESSION_TTL_MS)
   .option('--dsh-bin <path>', 'dsh executable for per-user instances', 'dsh')
   .option('--dsh-arg <arg...>', 'extra argument for each dsh web instance (repeatable)')
   .option('--idle-timeout-ms <ms>', 'recycle idle instances after this many ms (0 disables)', value => Number(value), DEFAULT_IDLE_TIMEOUT_MS)

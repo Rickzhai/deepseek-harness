@@ -16,9 +16,9 @@ browser ──► gateway (login page + /auth/* + reverse proxy)
 
 - **Local accounts** — passwords are stored as scrypt hashes (`scrypt$N$r$p$salt$hash`), verified with a constant-time compare; the login endpoint is throttled per username+IP.
 - **OIDC/SSO** — authorization-code flow with PKCE (S256), discovery, token exchange, and userinfo; a successful sign-in auto-provisions a gateway user by default, or links to an existing account.
-- **Session cookies** — opaque 256-bit bearer tokens, HMAC-signed, `HttpOnly`/`SameSite=Lax`, sliding TTL; only token digests are persisted, so a leaked session file does not expose usable cookies.
-- **Per-user instances** — `InstanceManager` spawns `dsh web --host 127.0.0.1 --port <free>` with `DSH_HOME=<data-root>/users/<id>` and the user's default workspace as cwd, probes readiness, recycles idle instances after a configurable timeout, and respawns after crashes.
-- **Reverse proxy** — HTTP and WebSocket upgrade forwarding with header sanitation: the child's browser-trust fence requires a loopback `Host` and no cross-site markers, so the gateway strips `Origin`/`Sec-Fetch-*`/`Cookie` and rewrites `Host` to `127.0.0.1:<port>`.
+- **Session cookies** — opaque 256-bit bearer tokens, HMAC-signed, `HttpOnly`/`SameSite=Lax`, sliding TTL (default **1 hour** of inactivity, configurable via `--session-ttl-ms`); only token digests are persisted, so a leaked session file does not expose usable cookies.
+- **Per-user instances** — `InstanceManager` spawns `dsh web --host 127.0.0.1 --port <free>` with `DSH_HOME=<data-root>/users/<id>` and the user's default workspace as cwd, probes readiness, recycles idle instances after a configurable timeout, and respawns after crashes. Signing out tears the instance down immediately.
+- **Reverse proxy** — HTTP and WebSocket upgrade forwarding with header sanitation: the child's browser-trust fence requires a loopback `Host` and no cross-site markers, so the gateway strips `Origin`/`Sec-Fetch-*`/`Cookie` and rewrites `Host` to `127.0.0.1:<port>`. The proxied SPA's `index.html` gains a small self-contained avatar/username/sign-out menu in the top-right corner (driven by `/auth/me` and `/auth/logout`).
 
 ## CLI
 

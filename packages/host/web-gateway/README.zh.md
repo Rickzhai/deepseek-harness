@@ -16,9 +16,9 @@ browser ──► gateway (login page + /auth/* + reverse proxy)
 
 - **本地账号** — 密码以 scrypt 哈希存储（`scrypt$N$r$p$salt$hash`），用恒定时间比较校验；登录接口按「用户名+IP」限速。
 - **OIDC/SSO** — 授权码流程 + PKCE（S256），包含 discovery、令牌交换与 userinfo；默认在登录成功时自动创建网关用户，或绑定到已有账号。
-- **会话 cookie** — 不透明的 256 位 bearer 令牌，HMAC 签名，`HttpOnly`/`SameSite=Lax`，滑动 TTL；仅持久化令牌摘要，会话文件泄露也不会暴露可用 cookie。
-- **每用户实例** — `InstanceManager` 以 `dsh web --host 127.0.0.1 --port <空闲端口>` 启动实例，设置 `DSH_HOME=<data-root>/users/<id>` 并以用户默认工作区为 cwd；探测就绪、按可配置超时回收空闲实例、崩溃后自动重启。
-- **反向代理** — HTTP 与 WebSocket upgrade 转发并做头清理：子实例的浏览器信任围栏要求 loopback 的 `Host` 且无跨站标记，因此网关剥离 `Origin`/`Sec-Fetch-*`/`Cookie` 并把 `Host` 改写为 `127.0.0.1:<port>`。
+- **会话 cookie** — 不透明的 256 位 bearer 令牌，HMAC 签名，`HttpOnly`/`SameSite=Lax`，滑动 TTL（默认**无操作 1 小时后过期**，可通过 `--session-ttl-ms` 配置）；仅持久化令牌摘要，会话文件泄露也不会暴露可用 cookie。
+- **每用户实例** — `InstanceManager` 以 `dsh web --host 127.0.0.1 --port <空闲端口>` 启动实例，设置 `DSH_HOME=<data-root>/users/<id>` 并以用户默认工作区为 cwd；探测就绪、按可配置超时回收空闲实例、崩溃后自动重启。退出登录时会立即关闭该实例。
+- **反向代理** — HTTP 与 WebSocket upgrade 转发并做头清理：子实例的浏览器信任围栏要求 loopback 的 `Host` 且无跨站标记，因此网关剥离 `Origin`/`Sec-Fetch-*`/`Cookie` 并把 `Host` 改写为 `127.0.0.1:<port>`。代理后的 SPA `index.html` 会在右上角注入一个自包含的头像/用户名/退出菜单（由 `/auth/me` 与 `/auth/logout` 驱动）。
 
 ## CLI
 

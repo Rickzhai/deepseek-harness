@@ -23,4 +23,5 @@ export { discoverOidc, newPendingOidcAuth, pendingOidcAuthExpired, pkceChallenge
 export type { OidcClient, OidcProviderConfig, OidcUserinfo, PendingOidcAuth } from './oidc.ts'
 export { OidcError } from './oidc.ts'
 export { proxyHttp, proxyUpgrade } from './proxy.ts'
+export { injectUserMenu, USER_MENU_INJECT } from './user-menu-inject.ts'
 export { LOGIN_PAGE_HTML } from './login-page.ts'
